@@ -1,0 +1,21 @@
+{
+  "fullName": "Subash Kumar S",
+  "email": "subash@stadiumgpt.com",
+  "language": "en",
+  "theme": "dark",
+  "role": "Fan",
+  "seatDetails": {
+    "section": "114",
+    "row": "M",
+    "seat": "15"
+  },
+  "staffDetails": {
+    "assignedZone": "Zone C - North Concourse",
+    "shiftTime": "18:00 - 23:30"
+  },
+  "notifications": {
+    "push": true,
+    "email": false,
+    "sms": true
+  }
+}
