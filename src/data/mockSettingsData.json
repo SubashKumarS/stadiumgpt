@@ -1,0 +1,8 @@
+{
+  "fullName": "John Doe",
+  "email": "john.doe@example.com",
+  "language": "en",
+  "theme": false,
+  "notifications": true,
+  "stadiumRole": "fan"
+}
