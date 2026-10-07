@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import Icon from '../common/Icon.jsx'
 import { NAV_ITEMS } from '../../data/navigation.js'
+import { MATCH_DAY_STATUS } from '../../data/dashboardData.js'
 
 /**
  * Application sidebar.
@@ -102,11 +103,10 @@ export default function Sidebar({ open, onClose }) {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
               </span>
-              Match day - live
+              {MATCH_DAY_STATUS.label}
             </div>
             <p className="mt-1.5 text-xs leading-relaxed text-slate-400">
-              Central Arena is hosting Metro United vs. Riverside FC today at
-              19:45.
+              {MATCH_DAY_STATUS.sentence}
             </p>
           </div>
         </div>

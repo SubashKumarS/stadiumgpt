@@ -119,6 +119,43 @@ const ICONS = {
       <path d="M12 8.6v6.8" />
     </>
   ),
+  /* Barred entry gate */
+  gate: (
+    <>
+      <path d="M4 21V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v15" />
+      <path d="M9 21V6M15 21V6M3 21h18" />
+    </>
+  ),
+  /* Fork and knife */
+  food: (
+    <>
+      <path d="M6.5 3v6a2.5 2.5 0 0 0 5 0V3" />
+      <path d="M9 11.5V21" />
+      <path d="M17.5 3c1.8 2.4 1.8 7.6 0 10v8" />
+    </>
+  ),
+  /* Signage-style person, used for restrooms */
+  restroom: (
+    <>
+      <circle cx="12" cy="4.6" r="2.2" />
+      <path d="M12 7.6v6M8 9.8h8M9.6 21l2.4-7.4 2.4 7.4" />
+    </>
+  ),
+  /* Letter P in a rounded plate */
+  parking: (
+    <>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="4" />
+      <path d="M9.5 17V7.5h3a3 3 0 0 1 0 6h-3" />
+    </>
+  ),
+  /* Medical kit with a handle and a cross */
+  firstAid: (
+    <>
+      <rect x="3" y="7" width="18" height="13" rx="3" />
+      <path d="M9 7V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v2" />
+      <path d="M12 11v5M9.5 13.5h5" />
+    </>
+  ),
 }
 
 export default function Icon({ name, className = 'h-5 w-5' }) {
