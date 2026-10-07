@@ -1,0 +1,61 @@
+@import 'tailwindcss';
+
+/* Design tokens for StadiumGPT.
+   Defined with Tailwind v4 CSS-first theme variables so they are
+   available as utility classes (e.g. bg-brand, text-brand). */
+@theme {
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+
+  /* Deep stadium-night navy used for the application shell */
+  --color-navy-950: #060d1c;
+  --color-navy-900: #0a1428;
+  --color-navy-800: #101f3d;
+  --color-navy-700: #1a2c52;
+
+  /* Turf green for pitch-inspired accents */
+  --color-turf-500: #16a34a;
+  --color-turf-600: #15803d;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Subtle floodlight glow used behind the dashboard hero and sidebar brand */
+.glow-brand {
+  background: radial-gradient(
+    ellipse at top left,
+    rgb(37 99 235 / 0.35),
+    transparent 60%
+  );
+}
+
+/* Faint pitch-stripe texture for empty/hero surfaces */
+.pitch-stripes {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgb(255 255 255 / 0.04) 0px,
+    rgb(255 255 255 / 0.04) 32px,
+    transparent 32px,
+    transparent 64px
+  );
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: #f8fafc;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+}
