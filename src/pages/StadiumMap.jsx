@@ -1,124 +1,116 @@
+import { useMemo, useState } from 'react'
 import useDocumentTitle from '../hooks/useDocumentTitle.js'
 import Card from '../components/common/Card.jsx'
-import Badge from '../components/common/Badge.jsx'
 import Icon from '../components/common/Icon.jsx'
+import MapFilters from '../components/stadium-map/MapFilters.jsx'
+import MapSearch from '../components/stadium-map/MapSearch.jsx'
+import StadiumMapCanvas from '../components/stadium-map/StadiumMapCanvas.jsx'
+import LocationDetails from '../components/stadium-map/LocationDetails.jsx'
+import RouteDirections from '../components/stadium-map/RouteDirections.jsx'
+import { stadiumLocations } from '../data/stadiumLocations.js'
 
-const MARKERS = [
-  { id: 'A', label: 'Gate A', x: 15, y: 18, type: 'gate' },
-  { id: 'B', label: 'Gate B', x: 85, y: 18, type: 'gate' },
-  { id: 'C', label: 'Gate C', x: 15, y: 82, type: 'gate' },
-  { id: 'D', label: 'Gate D', x: 85, y: 82, type: 'gate' },
-  { id: 'F1', label: 'Food court', x: 50, y: 12, type: 'food' },
-  { id: 'M1', label: 'Medical', x: 92, y: 50, type: 'medical' },
-  { id: 'R1', label: 'Restrooms', x: 8, y: 50, type: 'restroom' },
-  { id: 'L1', label: 'Lost & found', x: 50, y: 88, type: 'info' },
-]
-
-const LEGEND = [
-  { type: 'gate', label: 'Entrance gates', color: 'bg-brand-500' },
-  { type: 'food', label: 'Food & beverage', color: 'bg-amber-500' },
-  { type: 'medical', label: 'Medical point', color: 'bg-rose-500' },
-  { type: 'restroom', label: 'Restrooms', color: 'bg-violet-500' },
-  { type: 'info', label: 'Guest services', color: 'bg-emerald-500' },
-]
-
-const MARKER_COLORS = {
-  gate: 'bg-brand-500',
-  food: 'bg-amber-500',
-  medical: 'bg-rose-500',
-  restroom: 'bg-violet-500',
-  info: 'bg-emerald-500',
-}
-
-/**
- * Static schematic of the venue (no map provider - pure CSS/SVG).
- * Markers are positioned with percentages so the layout scales.
- */
 export default function StadiumMap() {
   useDocumentTitle('Stadium Map | StadiumGPT')
 
+  const [activeCategory, setActiveCategory] = useState('All')
+  const [search, setSearch] = useState('')
+  const [selectedLocation, setSelectedLocation] = useState(stadiumLocations[0] ?? null)
+  const gateLocations = useMemo(
+    () => stadiumLocations.filter((location) => location.category === 'Gates'),
+    [],
+  )
+  const [selectedGateId, setSelectedGateId] = useState(gateLocations[0]?.id ?? '')
+  const [route, setRoute] = useState(null)
+
+  const visibleLocations = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    return stadiumLocations.filter((location) => {
+      const categoryMatches = activeCategory === 'All' || location.category === activeCategory
+      const searchMatches =
+        !query ||
+        [
+          location.name,
+          location.category,
+          location.section,
+          location.nearbyLandmark,
+          location.description,
+          ...(location.facilities ?? []),
+        ].some((value) => value.toLowerCase().includes(query))
+      return categoryMatches && searchMatches
+    })
+  }, [activeCategory, search])
+
+  const routeStart = route?.startGate ?? null
+  const routeDestination = route?.destination ?? null
+
+  const routeSteps = routeStart && routeDestination
+    ? [
+        `Start from ${routeStart.name}.`,
+        `Follow the highlighted path toward ${routeDestination.section}.`,
+        `Move along the concourse in the direction of ${routeDestination.nearbyLandmark}.`,
+        `Arrive at ${routeDestination.name}.`,
+      ]
+    : []
+
+  function handleGetDirections(destination) {
+    const startGate = gateLocations.find((location) => location.id === selectedGateId)
+    if (!startGate) return
+    setRoute({ startGate, destination })
+  }
+
+  function clearRoute() {
+    setRoute(null)
+  }
+
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-            Central Arena - ground floor
-          </h2>
-          <p className="text-sm text-slate-500">
-            Tap a marker for directions. Full navigation arrives with the maps
-            integration.
-          </p>
-        </div>
-        <Badge variant="brand">18 of 20 gates open</Badge>
+    <div className="flex min-w-0 flex-col gap-5">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Explore Stadium</h1>
+        <p className="mt-1 text-sm text-slate-500 sm:text-base">Find your way around the stadium with StadiumGPT.</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-4">
-        {/* Map */}
-        <Card className="lg:col-span-3" bodyClassName="mt-4">
-          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-navy-950">
-            {/* Stands */}
-            <div className="absolute inset-[6%] rounded-[2rem] border-4 border-white/10 bg-navy-800" />
-            <div className="absolute inset-[16%] rounded-xl border border-dashed border-white/10" />
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <Card className="min-w-0 p-4 sm:p-5" bodyClassName="mt-4">
+          <div className="flex flex-col gap-3">
+            <MapSearch value={search} onChange={setSearch} />
+            <MapFilters activeCategory={activeCategory} onChange={setActiveCategory} />
+          </div>
 
-            {/* Pitch */}
-            <div className="absolute inset-x-[26%] inset-y-[30%] rounded-md bg-turf-600/90">
-              <div className="absolute inset-3 rounded-sm border border-white/40" />
-              <div className="absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/50" />
-              <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/50" />
-            </div>
+          <div className="mt-4">
+            <StadiumMapCanvas
+              locations={visibleLocations}
+              selectedLocation={selectedLocation}
+              routeStart={routeStart}
+              routeDestination={routeDestination}
+              onSelect={setSelectedLocation}
+            />
+          </div>
 
-            {/* Markers */}
-            {MARKERS.map((marker) => (
-              <button
-                key={marker.id}
-                type="button"
-                style={{ left: `${marker.x}%`, top: `${marker.y}%` }}
-                className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full p-1 transition hover:scale-110"
-                title={marker.label}
-              >
-                <span
-                  className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-lg ring-2 ring-navy-950 ${
-                    MARKER_COLORS[marker.type]
-                  }`}
-                >
-                  {marker.label.charAt(0)}
-                </span>
-              </button>
-            ))}
+          <div className="mt-3 flex items-center justify-between gap-3 text-xs text-slate-500">
+            <span>{visibleLocations.length} demo locations shown</span>
+            <span className="flex items-center gap-1.5"><Icon name="location" className="h-3.5 w-3.5 text-brand-600" /> Demo map only, not real navigation</span>
           </div>
         </Card>
 
-        {/* Legend */}
-        <div className="flex flex-col gap-6">
-          <Card title="Legend">
-            <ul className="mt-4 space-y-3">
-              {LEGEND.map((item) => (
-                <li key={item.type} className="flex items-center gap-3">
-                  <span
-                    className={`h-3 w-3 shrink-0 rounded-full ${item.color}`}
-                  />
-                  <span className="text-sm text-slate-600">{item.label}</span>
-                </li>
+        <Card title="Location Details" className="h-fit p-4 sm:p-5" bodyClassName="mt-4">
+          <div>
+            <label htmlFor="start-gate" className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Select start gate
+            </label>
+            <select
+              id="start-gate"
+              value={selectedGateId}
+              onChange={(event) => setSelectedGateId(event.target.value)}
+              className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+            >
+              {gateLocations.map((gate) => (
+                <option key={gate.id} value={gate.id}>{gate.name}</option>
               ))}
-            </ul>
-          </Card>
-
-          <Card title="You are here">
-            <div className="mt-4 flex items-start gap-3 rounded-lg bg-brand-50 p-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white">
-                <Icon name="location" className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="text-sm font-medium text-slate-800">
-                  Concourse 1 - Gate A
-                </p>
-                <p className="text-xs text-slate-500">
-                  North Stand, 40m from the food court
-                </p>
-              </div>
-            </div>
-          </Card>
-        </div>
+            </select>
+          </div>
+          <LocationDetails location={selectedLocation} onGetDirections={handleGetDirections} />
+          <RouteDirections startGate={routeStart} destination={routeDestination} steps={routeSteps} onClear={clearRoute} />
+        </Card>
       </div>
     </div>
   )

@@ -1,118 +1,160 @@
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import useDocumentTitle from '../hooks/useDocumentTitle.js'
-import Icon from '../components/common/Icon.jsx'
-import {
-  INITIAL_MESSAGES,
-  SUGGESTED_PROMPTS,
-  MOCK_REPLIES,
-} from '../data/assistant.js'
-
-let nextId = 100
+import { getResponse, simulateThinking } from '../services/mockAssistant.js'
+import ChatWindow from '../components/chat/ChatWindow.jsx'
+import ChatInput from '../components/chat/ChatInput.jsx'
+import SuggestedQuestions from '../components/chat/SuggestedQuestions.jsx'
 
 /**
- * Chat interface. The conversation is fully mocked - no AI API is
- * called. Sending a message appends a canned placeholder reply so the
- * interaction feels real until the backend lands.
+ * Initial greeting message from StadiumGPT
+ */
+const INITIAL_MESSAGE = {
+  id: 1,
+  role: 'assistant',
+  text: "Hi! I'm StadiumGPT. I can help you find gates, seats, facilities, events, tickets, and other stadium information.",
+  timestamp: Date.now(),
+}
+
+/**
+ * Suggested questions for quick access
+ */
+const SUGGESTED_QUESTIONS = [
+  'Where is Gate A?',
+  'Where is the nearest restroom?',
+  'How do I find my seat?',
+  'Where can I get food?',
+  'Where is the first-aid center?',
+  'What time does the event start?',
+]
+
+/**
+ * Assistant Page - AI-powered stadium chat interface
+ *
+ * Architecture:
+ * - State managed locally (messages, input, loading)
+ * - Mock responses from mockAssistant.js service
+ * - Reusable chat components
+ * - Ready for real AI API integration
  */
 export default function Assistant() {
   useDocumentTitle('AI Assistant | StadiumGPT')
 
-  const [messages, setMessages] = useState(INITIAL_MESSAGES)
+  const [messages, setMessages] = useState([INITIAL_MESSAGE])
   const [draft, setDraft] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  function sendMessage(text) {
+  /**
+   * Add a user message and trigger AI response
+   */
+  const sendMessage = useCallback(async (text) => {
     const trimmed = text.trim()
-    if (!trimmed) return
+    if (!trimmed || isLoading) return
 
-    const reply = MOCK_REPLIES[(nextId + trimmed.length) % MOCK_REPLIES.length]
+    const userMessage = {
+      id: Date.now(),
+      role: 'user',
+      text: trimmed,
+      timestamp: Date.now(),
+    }
 
-    setMessages((prev) => [
-      ...prev,
-      { id: nextId++, role: 'user', text: trimmed },
-      { id: nextId++, role: 'assistant', text: reply },
-    ])
+    // 1. Add user message
+    setMessages((prev) => [...prev, userMessage])
     setDraft('')
-  }
+    setIsLoading(true)
+
+    try {
+      // 2. Simulate thinking delay
+      await simulateThinking()
+
+      // 3. Generate mock response
+      const responseText = getResponse(trimmed)
+
+      const assistantMessage = {
+        id: Date.now() + 1,
+        role: 'assistant',
+        text: responseText,
+        timestamp: Date.now(),
+      }
+
+      // 4. Add AI response
+      setMessages((prev) => [...prev, assistantMessage])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [isLoading])
+
+  /**
+   * Handle suggested question click
+   */
+  const handleSuggestionClick = useCallback(
+    (question) => {
+      sendMessage(question)
+    },
+    [sendMessage]
+  )
+
+  /**
+   * Handle form submit
+   */
+  const handleSubmit = useCallback(
+    (e) => {
+      e.preventDefault()
+      sendMessage(draft)
+    },
+    [draft, sendMessage]
+  )
+
+  /**
+   * Clear conversation and reset to initial state
+   */
+  const handleClearChat = useCallback(() => {
+    setMessages([INITIAL_MESSAGE])
+    setDraft('')
+  }, [])
+
+  /**
+   * Handle input change
+   */
+  const handleChange = useCallback((e) => {
+    setDraft(e.target.value)
+  }, [])
 
   return (
     <div className="flex h-[calc(100vh-8.5rem)] flex-col gap-4">
-      {/* Conversation */}
-      <div className="flex-1 space-y-4 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex gap-3 ${
-              message.role === 'user' ? 'flex-row-reverse' : ''
-            }`}
-          >
-            <span
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                message.role === 'assistant'
-                  ? 'bg-brand-600 text-white'
-                  : 'bg-navy-900 text-white'
-              }`}
-            >
-              {message.role === 'assistant' ? (
-                <Icon name="sparkles" className="h-4 w-4" />
-              ) : (
-                'FG'
-              )}
-            </span>
-
-            <div
-              className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                message.role === 'assistant'
-                  ? 'rounded-tl-sm bg-slate-100 text-slate-700'
-                  : 'rounded-tr-sm bg-brand-600 text-white'
-              }`}
-            >
-              {message.text}
-            </div>
-          </div>
-        ))}
-
-        <p className="pt-2 text-center text-xs text-slate-400">
-          Demo conversation - no AI API is connected yet.
-        </p>
+      {/* Page Header */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          StadiumGPT Assistant
+        </h1>
+        <p className="text-sm text-slate-600">Your AI-powered match-day companion</p>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500" />
+          </span>
+          Demo assistant
+        </span>
       </div>
 
-      {/* Suggested prompts */}
-      <div className="flex flex-wrap gap-2">
-        {SUGGESTED_PROMPTS.map((prompt) => (
-          <button
-            key={prompt}
-            type="button"
-            onClick={() => sendMessage(prompt)}
-            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-brand-500 hover:text-brand-700"
-          >
-            {prompt}
-          </button>
-        ))}
-      </div>
+      {/* Chat Window */}
+      <ChatWindow messages={messages} isLoading={isLoading} />
 
-      {/* Composer */}
-      <form
-        className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-brand-500"
-        onSubmit={(event) => {
-          event.preventDefault()
-          sendMessage(draft)
-        }}
-      >
-        <input
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="Ask about gates, seats, fixtures or facilities..."
-          className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 outline-none"
-        />
-        <button
-          type="submit"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white transition hover:bg-brand-700 disabled:opacity-40"
-          disabled={!draft.trim()}
-          aria-label="Send message"
-        >
-          <Icon name="send" className="h-5 w-5" />
-        </button>
-      </form>
+      {/* Suggested Questions */}
+      <SuggestedQuestions
+        questions={SUGGESTED_QUESTIONS}
+        onSelect={handleSuggestionClick}
+        disabled={isLoading}
+      />
+
+      {/* Chat Input */}
+      <ChatInput
+        value={draft}
+        onChange={handleChange}
+        onSubmit={handleSubmit}
+        onClear={handleClearChat}
+        disabled={isLoading}
+        placeholder="Ask StadiumGPT about the stadium..."
+      />
     </div>
   )
 }
